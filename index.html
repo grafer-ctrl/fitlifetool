@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FitLife Tool - Arctic PWA</title>
+    
+    <!-- PWA Meta Tags & Manifest -->
+    <meta name="theme-color" content="#e0f2fe"> <!-- Sky Blue Light -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FitLife Arctic">
+    
+    <!-- Link Manifest (Pastikan Anda membuat file manifest.json nanti) -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Font Awesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* PALET ARCTIC GLASS ❄️ */
+            /* Latar Belakang: Putih Salju ke Biru Es */
+            --bg-deep: #f0f9ff; /* Sky-50 */
+            --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            
+            /* Efek Kaca Es (Frosted Ice) */
+            --glass-bg: rgba(255, 255, 255, 0.65); /* Sangat transparan putih */
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-blur: 20px; /* Blur tinggi seperti es tebal */
+            
+            /* Aksen Warna */
+            --arctic-primary: #0ea5e9; /* Sky Blue 500 - Warna Utama */
+            --arctic-secondary: #38bdf8; /* Sky Blue 400 */
+            --arctic-dark: #0284c7; /* Untuk teks header */
+            
+            /* Teks (Gelap agar terbaca di background terang) */
+            --text-main: #1e293b; /* Slate 800 */
+            --text-muted: #64748b; /* Slate 500 */
+            
+            --card-radius: 20px;
+            --shadow-ice: 0 8px 32px rgba(14, 165, 233, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-deep);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 100px;
+            overflow-x: hidden;
+        }
+
+        /* Background Glow (Efek Aurora Halus) */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: -20%;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
+            filter: blur(80px);
+            z-index: -1;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -10%;
+            right: -10%;
+            width: 70vw;
+            height: 70vw;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%);
+            filter: blur(80px);
+            z-index: -1;
+        }
+
+        /* Header */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: rgba(240, 249, 255, 0.85); /* Icy Overlay */
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border-bottom: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--arctic-dark), var(--arctic-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--arctic-dark);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .menu-btn:active { transform: scale(0.9); }
+
+        /* Sidebar / Drawer */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            max-width: 300px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            z-index: 200;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 1px solid #fff;
+            padding: 24px;
+            box-shadow: -5px 0 30px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.active { right: 0; }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 15px;
+        }
+
+        .sidebar-header .logo { font-size: 1.2rem; }
+
+        .lang-list { list-style: none; }
+
+        .lang-item {
+            padding: 16px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .lang-item:hover { background: #f1f5f9; color: var(--arctic-dark); }
+        
+        /* Active State for Language */
+        .lang-item.active {
+            background: #e0f2fe;
+            color: var(--arctic-dark);
+            border: 1px solid #bae6fd;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(30, 41, 59, 0.2);
+            z-index: 150;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+            backdrop-filter: blur(2px);
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* Main Content */
+        .container {
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .category-title {
+            font-size: 0.95rem;
+            color: var(--arctic-primary);
+            margin: 30px 0 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
+        }
+
+        /* Arctic Glass Card */
+        .card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            padding: 24px 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-ice);
+        }
+
+        /* Frost Sheen Effect */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%);
+            opacity: 0.5;
+        }
+
+        .card:active { transform: scale(0.96); }
+
+        .card:hover {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: var(--arctic-primary);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(14, 165, 233, 0.2);
+        }
+
+        .card i {
+            font-size: 1.8rem;
+            margin-bottom: 14px;
+            color: var(--arctic-primary);
+            /* Text Shadow untuk efek glow es */
+            text-shadow: 0 0 20px rgba(14, 165, 233, 0.4); 
+            z-index: 1;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--text-main);
+            z-index: 1;
+        }
+
+        /* Floating Bottom Navigation (Frost Style) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 380px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            display: flex;
+            justify-content: space-evenly;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 10px 40px -10px rgba(30, 41, 59, 0.15);
+            z-index: 90;
+        }
+
+        .nav-item {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            padding: 10px 14px;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .nav-item.active {
+            color: #fff;
+            background: var(--arctic-primary);
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .grid .card { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Overlay -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar (Language only EN & ID) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo" data-i18n="menu_region">Region / Language</span>
+            <button class="menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <ul class="lang-list">
+            <!-- Hanya 2 Bahasa Sesuai Request -->
+            <li class="lang-item active" onclick="changeLanguage('en', this)">
+                <i class="fa-solid fa-earth-americas"></i> English (EN)
+            </li>
+            <li class="lang-item" onclick="changeLanguage('id', this)">
+                <i class="fa-solid fa-flag"></i> Indonesia (ID)
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="logo"><i class="fa-regular fa-snowflake"></i> FitLife</div>
+        <button class="menu-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        
+        <!-- Category 1 -->
+        <div class="category-title">
+            <i class="fa-solid fa-dumbbell"></i> <span data-i18n="cat_fitness">Fitness</span>
+        </div>
+        <div class="grid">
+            <a href="bmi-calculator.html" class="card">
+                <i class="fa-solid fa-weight-scale"></i>
+                <span class="card-title" data-i18n="tool_bmi">BMI Calculator</span>
+            </a>
+            <a href="calorie-calculator.html" class="card">
+                <i class="fa-solid fa-fire"></i>
+                <span class="card-title" data-i18n="tool_calories">Calorie Calculator</span>
+            </a>
+            <a href="body-fat-calculator.html" class="card">
+                <i class="fa-solid fa-ruler-vertical"></i>
+                <span class="card-title" data-i18n="tool_body_fat">Body Fat</span>
+            </a>
+            <a href="bmr-calculator.html" class="card">
+                <i class="fa-solid fa-bolt"></i>
+                <span class="card-title" data-i18n="tool_bmr">BMR Calculator</span>
+            </a>
+            <a href="ideal-weight-calculator.html" class="card">
+                <i class="fa-solid fa-scale-balanced"></i>
+                <span class="card-title" data-i18n="tool_ideal_weight">Ideal Weight</span>
+            </a>
+            <a href="pace-calculator.html" class="card">
+                <i class="fa-solid fa-stopwatch"></i>
+                <span class="card-title" data-i18n="tool_pace">Pace Calculator</span>
+            </a>
+            <a href="army-body-fat-calculator.html" class="card">
+                <i class="fa-solid fa-person-military-pointing"></i>
+                <span class="card-title" data-i18n="tool_army_fat">Army Body Fat</span>
+            </a>
+            <a href="lean-body-mass-calculator.html" class="card">
+                <i class="fa-solid fa-child-reaching"></i>
+                <span class="card-title" data-i18n="tool_lean_mass">Lean Body Mass</span>
+            </a>
+            <a href="healthy-weight-calculator.html" class="card">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <span class="card-title" data-i18n="tool_healthy_weight">Healthy Weight</span>
+            </a>
+            <a href="calories-burned-calculator.html" class="card">
+                <i class="fa-solid fa-person-running"></i>
+                <span class="card-title" data-i18n="tool_calories_burned">Calories Burned</span>
+            </a>
+        </div>
+
+        <!-- Category 2 -->
+        <div class="category-title">
+            <i class="fa-solid fa-baby-carriage"></i> <span data-i18n="cat_pregnancy">Pregnancy</span>
+        </div>
+        <div class="grid">
+            <a href="pregnancy-calculator.html" class="card">
+                <i class="fa-solid fa-person-pregnant"></i>
+                <span class="card-title" data-i18n="tool_preg_calc">Pregnancy Calc</span>
+            </a>
+            <a href="pregnancy-weight-gain-calculator.html" class="card">
+                <i class="fa-solid fa-arrow-up-right-dots"></i>
+                <span class="card-title" data-i18n="tool_preg_weight">Weight Gain</span>
+            </a>
+            <a href="due-date-calculator.html" class="card">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span class="card-title" data-i18n="tool_due_date">Due Date</span>
+            </a>
+            <a href="ovulation-calculator.html" class="card">
+                <i class="fa-solid fa-egg"></i>
+                <span class="card-title" data-i18n="tool_ovulation">Ovulation</span>
+            </a>
+        </div>
+
+        <!-- Category 3 -->
+        <div class="category-title">
+            <i class="fa-solid fa-calculator"></i> <span data-i18n="cat_others">Others</span>
+        </div>
+        <div class="grid">
+            <a href="macro-calculator.html" class="card">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span class="card-title" data-i18n="tool_macro">Macro Calc</span>
+            </a>
+            <a href="carbohydrate-calculator.html" class="card">
+                <i class="fa-solid fa-wheat-awn"></i>
+                <span class="card-title" data-i18n="tool_carbs">Carbohydrate</span>
+            </a>
+            <a href="protein-calculator.html" class="card">
+                <i class="fa-solid fa-drumstick-bite"></i>
+                <span class="card-title" data-i18n="tool_protein">Protein Calc</span>
+            </a>
+            <a href="tdee-calculator.html" class="card">
+                <i class="fa-solid fa-fire-burner"></i>
+                <span class="card-title" data-i18n="tool_tdee">TDEE Calc</span>
+            </a>
+        </div>
+    </main>
+
+    <!-- Floating Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active"><i class="fa-solid fa-house"></i></a>
+        <a href="#" class="nav-item"><i class="fa-solid fa-layer-group"></i></a>
+        <a href="#" class="nav-item"><i class="fa-solid fa-heart"></i></a>
+        <a href="#" class="nav-item"><i class="fa-solid fa-gear"></i></a>
+    </nav>
+
+    <script>
+        // --- 1. UI LOGIC (Sidebar) ---
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        // --- 2. ANIMATION LOGIC ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.04}s`;
+            });
+        });
+
+        // --- 3. TRANSLATION DICTIONARY (EN & ID ONLY) ---
+        const dictionary = {
+            en: {
+                menu_region: "Region / Language",
+                cat_fitness: "Fitness",
+                cat_pregnancy: "Pregnancy",
+                cat_others: "Others",
+                tool_bmi: "BMI Calculator",
+                tool_calories: "Calorie Calculator",
+                tool_body_fat: "Body Fat",
+                tool_bmr: "BMR Calculator",
+                tool_ideal_weight: "Ideal Weight",
+                tool_pace: "Pace Calculator",
+                tool_army_fat: "Army Body Fat",
+                tool_lean_mass: "Lean Body Mass",
+                tool_healthy_weight: "Healthy Weight",
+                tool_calories_burned: "Calories Burned",
+                tool_preg_calc: "Pregnancy Calc",
+                tool_preg_weight: "Weight Gain",
+                tool_due_date: "Due Date",
+                tool_ovulation: "Ovulation",
+                tool_macro: "Macro Calc",
+                tool_carbs: "Carbohydrate",
+                tool_protein: "Protein Calc",
+                tool_tdee: "TDEE Calc"
+            },
+            id: {
+                menu_region: "Wilayah / Bahasa",
+                cat_fitness: "Kebugaran",
+                cat_pregnancy: "Kehamilan",
+                cat_others: "Lainnya",
+                tool_bmi: "Kalkulator BMI",
+                tool_calories: "Kalkulator Kalori",
+                tool_body_fat: "Lemak Tubuh",
+                tool_bmr: "Kalkulator BMR",
+                tool_ideal_weight: "Berat Ideal",
+                tool_pace: "Kalkulator Kecepatan",
+                tool_army_fat: "Lemak Tubuh (TNI)",
+                tool_lean_mass: "Massa Tanpa Lemak",
+                tool_healthy_weight: "Berat Sehat",
+                tool_calories_burned: "Kalori Terbakar",
+                tool_preg_calc: "Kalkulator Kehamilan",
+                tool_preg_weight: "Kenaikan Berat Hamil",
+                tool_due_date: "Tanggal HPL",
+                tool_ovulation: "Ovulasi",
+                tool_macro: "Kalkulator Makro",
+                tool_carbs: "Karbohidrat",
+                tool_protein: "Kalkulator Protein",
+                tool_tdee: "Kalkulator TDEE"
+            }
+        };
+
+        // --- 4. TRANSLATION FUNCTION ---
+        function changeLanguage(langCode, element) {
+            // Highlight active menu
+            document.querySelectorAll('.lang-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+
+            const texts = dictionary[langCode];
+            const translatableElements = document.querySelectorAll('[data-i18n]');
+            
+            translatableElements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (texts[key]) {
+                    el.style.opacity = 0;
+                    setTimeout(() => {
+                        el.innerText = texts[key];
+                        el.style.opacity = 1;
+                    }, 150);
+                }
+            });
+
+            setTimeout(() => { toggleSidebar(); }, 300);
+        }
+
+        // --- 5. PWA SERVICE WORKER REGISTRATION ---
+        // Fitur ini akan aktif jika Anda memiliki file 'service-worker.js' dan 'manifest.json'
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Ganti '/service-worker.js' dengan path file SW Anda jika berbeda
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
