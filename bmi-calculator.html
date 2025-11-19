@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BMI Calculator - FitLife Arctic</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#e0f2fe">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Font Awesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* PALET ARCTIC GLASS */
+            --bg-deep: #f0f9ff;
+            --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-blur: 20px;
+            --arctic-primary: #0ea5e9;
+            --arctic-secondary: #38bdf8;
+            --arctic-dark: #0284c7;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --card-radius: 20px;
+            --shadow-ice: 0 8px 32px rgba(14, 165, 233, 0.1);
+
+            /* Warna Status BMI */
+            --bmi-under: #60a5fa;
+            --bmi-normal: #10b981;
+            --bmi-over: #f59e0b;
+            --bmi-obese: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-deep);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 40px;
+        }
+
+        /* Header Navigasi */
+        .nav-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(240, 249, 255, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.9);
+        }
+
+        .back-btn, .menu-btn {
+            font-size: 1.2rem;
+            color: var(--text-main);
+            text-decoration: none;
+            background: rgba(255,255,255,0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #fff;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .back-btn:active, .menu-btn:active { transform: scale(0.9); background: #fff; }
+        .page-title { font-weight: 700; font-size: 1.1rem; color: var(--arctic-dark); }
+
+        /* Sidebar CSS */
+        .sidebar {
+            position: fixed;
+            top: 0; right: -100%; width: 80%; max-width: 300px; height: 100%;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px);
+            z-index: 200; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 1px solid #fff; padding: 24px;
+            box-shadow: -5px 0 30px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+        }
+        .sidebar.active { right: 0; }
+        
+        .sidebar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;
+        }
+        .lang-list { list-style: none; }
+        .lang-item {
+            padding: 16px 12px; border-radius: 12px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 12px;
+            color: var(--text-muted); cursor: pointer; font-weight: 500; transition: all 0.2s;
+        }
+        .lang-item:hover { background: #f1f5f9; color: var(--arctic-dark); }
+        .lang-item.active { background: #e0f2fe; color: var(--arctic-dark); border: 1px solid #bae6fd; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30, 41, 59, 0.2); z-index: 150; opacity: 0;
+            pointer-events: none; transition: 0.3s; backdrop-filter: blur(2px);
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* Main Content */
+        .container {
+            padding: 24px; max-width: 600px; margin: 0 auto;
+            animation: fadeUp 0.5s ease-out;
+        }
+
+        .gender-group { display: flex; gap: 15px; margin-bottom: 25px; }
+        .gender-option {
+            flex: 1; background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 20px; border-radius: var(--card-radius); text-align: center;
+            cursor: pointer; transition: 0.3s; color: var(--text-muted); box-shadow: var(--shadow-ice);
+        }
+        .gender-option.active {
+            background: #fff; border-color: var(--arctic-primary); color: var(--arctic-primary);
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2); transform: translateY(-2px);
+        }
+        .gender-option i { font-size: 2rem; margin-bottom: 8px; display: block; }
+
+        .input-card {
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border); border-radius: var(--card-radius);
+            padding: 25px; margin-bottom: 20px; box-shadow: var(--shadow-ice);
+        }
+        .input-label {
+            display: block; font-size: 0.9rem; color: var(--text-muted);
+            margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .range-value {
+            font-size: 2.5rem; font-weight: 800; color: var(--text-main);
+            text-align: center; margin-bottom: 10px;
+        }
+        .range-value span { font-size: 1rem; color: var(--text-muted); font-weight: 500; }
+
+        input[type=range] {
+            width: 100%; -webkit-appearance: none; background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 8px; background: #bae6fd; border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%;
+            background: var(--arctic-primary); margin-top: -8px; box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+            border: 2px solid #fff;
+        }
+
+        /* Adsterra Container */
+        .ad-container {
+            margin: 20px 0;
+            text-align: center;
+            min-height: 60px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Action Button */
+        .calc-btn {
+            width: 100%; padding: 18px; background: var(--arctic-primary);
+            color: white; border: none; border-radius: 16px; font-size: 1.1rem;
+            font-weight: 700; cursor: pointer; box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4);
+            transition: 0.3s; position: relative; overflow: hidden;
+        }
+        .calc-btn:active { transform: scale(0.98); }
+
+        /* Result Area */
+        .result-container {
+            margin-top: 30px; background: rgba(255, 255, 255, 0.9);
+            border-radius: var(--card-radius); padding: 30px 20px; text-align: center;
+            display: none; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid #fff;
+        }
+        .bmi-number {
+            font-size: 4rem; font-weight: 800; margin: 10px 0;
+            background: linear-gradient(45deg, var(--text-main), var(--text-muted));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .bmi-status {
+            font-size: 1.5rem; font-weight: 700; margin-bottom: 15px;
+            padding: 5px 15px; border-radius: 20px; display: inline-block; color: #fff;
+        }
+        .bmi-desc { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Overlay -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar (Menu Bahasa) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo" style="font-weight:800; color:var(--arctic-dark)" data-i18n="menu_settings">Settings</span>
+            <button class="menu-btn" style="width:32px; height:32px;" onclick="toggleSidebar()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <ul class="lang-list">
+            <li class="lang-item active" onclick="changeLanguage('en', this)">
+                <i class="fa-solid fa-earth-americas"></i> English (EN)
+            </li>
+            <li class="lang-item" onclick="changeLanguage('id', this)">
+                <i class="fa-solid fa-flag"></i> Indonesia (ID)
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Header -->
+    <header class="nav-header">
+        <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="page-title" data-i18n="title_bmi">BMI Calculator</div>
+        <button class="menu-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+    </header>
+
+    <!-- Content -->
+    <main class="container">
+        
+        <!-- Gender Select -->
+        <div class="gender-group">
+            <div class="gender-option active" onclick="selectGender('male', this)">
+                <i class="fa-solid fa-mars"></i>
+                <span data-i18n="gender_male">Male</span>
+            </div>
+            <div class="gender-option" onclick="selectGender('female', this)">
+                <i class="fa-solid fa-venus"></i>
+                <span data-i18n="gender_female">Female</span>
+            </div>
+        </div>
+
+        <!-- Height Input -->
+        <div class="input-card">
+            <label class="input-label" data-i18n="label_height">Height (Tinggi)</label>
+            <div class="range-value" id="heightVal">170 <span>cm</span></div>
+            <input type="range" min="100" max="220" value="170" id="heightRange" 
+                oninput="updateDisplay('heightVal', this.value, 'cm')">
+        </div>
+
+        <!-- Weight Input -->
+        <div class="input-card">
+            <label class="input-label" data-i18n="label_weight">Weight (Berat)</label>
+            <div class="range-value" id="weightVal">65 <span>kg</span></div>
+            <input type="range" min="30" max="150" value="65" id="weightRange" 
+                oninput="updateDisplay('weightVal', this.value, 'kg')">
+        </div>
+
+        <!-- Age Input -->
+        <div class="input-card">
+            <label class="input-label" data-i18n="label_age">Age (Umur)</label>
+            <div class="range-value" id="ageVal">25 <span data-i18n="unit_years">years</span></div>
+            <input type="range" min="10" max="100" value="25" id="ageRange" 
+                oninput="updateDisplay('ageVal', this.value, currentLang === 'id' ? 'tahun' : 'years')">
+        </div>
+
+        <!-- IKLAN ADSTERRA -->
+        <div class="ad-container">
+            <script type="text/javascript">
+                atOptions = {
+                    'key' : '2a28cd5411ae53a35cf4ec828d845d19',
+                    'format' : 'iframe',
+                    'height' : 60,
+                    'width' : 468,
+                    'params' : {}
+                };
+            </script>
+            <script type="text/javascript" src="//www.highperformanceformat.com/2a28cd5411ae53a35cf4ec828d845d19/invoke.js"></script>
+        </div>
+
+        <!-- Calculate Button -->
+        <button class="calc-btn" onclick="calculateBMI()">
+            <span data-i18n="btn_calculate">Calculate BMI</span> <i class="fa-solid fa-calculator" style="margin-left: 8px;"></i>
+        </button>
+
+        <!-- Result Area -->
+        <div class="result-container" id="resultArea">
+            <div class="result-title" data-i18n="result_title">Your BMI Result</div>
+            <div class="bmi-number" id="bmiScore">0.0</div>
+            <div class="bmi-status" id="bmiStatus" data-i18n="status_waiting">Waiting...</div>
+            <p class="bmi-desc" id="bmiDesc" data-i18n="desc_default">Enter your height and weight to see the result.</p>
+            
+            <button onclick="resetCalc()" style="margin-top: 15px; background:none; border:none; color:var(--text-muted); text-decoration:underline; cursor:pointer;" data-i18n="btn_recalculate">Recalculate</button>
+        </div>
+
+    </main>
+
+    <script>
+        // --- GLOBAL VARIABLES ---
+        let currentLang = 'en'; // Default Language
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        // --- TRANSLATION DICTIONARY ---
+        const dictionary = {
+            en: {
+                menu_settings: "Settings",
+                title_bmi: "BMI Calculator",
+                gender_male: "Male",
+                gender_female: "Female",
+                label_height: "Height",
+                label_weight: "Weight",
+                label_age: "Age",
+                unit_years: "years",
+                btn_calculate: "Calculate BMI",
+                result_title: "Your BMI Result",
+                status_waiting: "Waiting...",
+                desc_default: "Enter your height and weight to see the result.",
+                btn_recalculate: "Recalculate",
+                // Dynamic Results
+                status_under: "Underweight",
+                desc_under: "You are below the ideal weight. Consider eating nutrient-dense foods.",
+                status_normal: "Normal Weight",
+                desc_normal: "Great job! You have a healthy body weight. Keep it up!",
+                status_over: "Overweight",
+                desc_over: "You are slightly above ideal weight. Regular exercise can help.",
+                status_obese: "Obesity",
+                desc_obese: "Your weight might pose health risks. Please consult a doctor."
+            },
+            id: {
+                menu_settings: "Pengaturan",
+                title_bmi: "Kalkulator BMI",
+                gender_male: "Pria",
+                gender_female: "Wanita",
+                label_height: "Tinggi Badan",
+                label_weight: "Berat Badan",
+                label_age: "Usia",
+                unit_years: "tahun",
+                btn_calculate: "Hitung BMI",
+                result_title: "Hasil BMI Anda",
+                status_waiting: "Menunggu...",
+                desc_default: "Masukkan tinggi dan berat untuk melihat hasil.",
+                btn_recalculate: "Hitung Ulang",
+                // Dynamic Results
+                status_under: "Berat Kurang",
+                desc_under: "Anda di bawah berat ideal. Perbanyak makan makanan bergizi.",
+                status_normal: "Berat Normal",
+                desc_normal: "Kerja bagus! Berat badan Anda sehat. Pertahankan!",
+                status_over: "Kelebihan Berat",
+                desc_over: "Sedikit di atas berat ideal. Olahraga teratur bisa membantu.",
+                status_obese: "Obesitas",
+                desc_obese: "Berat badan berisiko bagi kesehatan. Konsultasikan ke dokter."
+            }
+        };
+
+        // --- UI FUNCTIONS ---
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function updateDisplay(elementId, value, unit) {
+            document.getElementById(elementId).innerHTML = `${value} <span>${unit}</span>`;
+        }
+
+        function selectGender(gender, element) {
+            document.querySelectorAll('.gender-option').forEach(opt => opt.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // --- LANGUAGE LOGIC ---
+        function changeLanguage(lang, element) {
+            currentLang = lang;
+            
+            // Update Sidebar UI
+            document.querySelectorAll('.lang-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+
+            // Update Text Content
+            const texts = dictionary[lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (texts[key]) {
+                    // Simple fade effect
+                    el.style.opacity = 0;
+                    setTimeout(() => {
+                        el.innerText = texts[key];
+                        el.style.opacity = 1;
+                    }, 150);
+                }
+            });
+
+            // Update dynamic units (like 'years'/'tahun' in Age slider)
+            const ageVal = document.getElementById('ageRange').value;
+            const unit = lang === 'id' ? 'tahun' : 'years';
+            updateDisplay('ageVal', ageVal, unit);
+
+            // Close sidebar
+            setTimeout(() => toggleSidebar(), 300);
+        }
+
+        // --- BMI CALCULATION LOGIC ---
+        function calculateBMI() {
+            const heightCm = parseFloat(document.getElementById('heightRange').value);
+            const weightKg = parseFloat(document.getElementById('weightRange').value);
+            
+            if (heightCm > 0 && weightKg > 0) {
+                const heightM = heightCm / 100;
+                const bmi = (weightKg / (heightM * heightM)).toFixed(1);
+                displayResult(bmi);
+            }
+        }
+
+        function displayResult(bmi) {
+            const resultArea = document.getElementById('resultArea');
+            const bmiScore = document.getElementById('bmiScore');
+            const bmiStatus = document.getElementById('bmiStatus');
+            const bmiDesc = document.getElementById('bmiDesc');
+
+            // Get current language texts for results
+            const texts = dictionary[currentLang];
+
+            resultArea.style.display = 'block';
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            bmiScore.innerText = bmi;
+
+            let color = '';
+            let statusKey = '';
+            let descKey = '';
+
+            if (bmi < 18.5) {
+                statusKey = 'status_under';
+                descKey = 'desc_under';
+                color = 'var(--bmi-under)';
+            } else if (bmi >= 18.5 && bmi <= 24.9) {
+                statusKey = 'status_normal';
+                descKey = 'desc_normal';
+                color = 'var(--bmi-normal)';
+            } else if (bmi >= 25 && bmi <= 29.9) {
+                statusKey = 'status_over';
+                descKey = 'desc_over';
+                color = 'var(--bmi-over)';
+            } else {
+                statusKey = 'status_obese';
+                descKey = 'desc_obese';
+                color = 'var(--bmi-obese)';
+            }
+
+            // Apply text from dictionary
+            bmiStatus.innerText = texts[statusKey];
+            bmiDesc.innerText = texts[descKey];
+            bmiStatus.style.backgroundColor = color;
+        }
+
+        function resetCalc() {
+            document.getElementById('resultArea').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</body>
+</html>
