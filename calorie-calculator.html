@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calorie Calculator - FitLife Arctic</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#e0f2fe">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Font Awesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* PALET ARCTIC GLASS (Konsisten) */
+            --bg-deep: #f0f9ff;
+            --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-blur: 20px;
+            
+            --arctic-primary: #0ea5e9; /* Sky Blue 500 */
+            --arctic-secondary: #38bdf8;
+            --arctic-dark: #0284c7;
+            
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            
+            --card-radius: 20px;
+            --shadow-ice: 0 8px 32px rgba(14, 165, 233, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-deep);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 40px;
+        }
+
+        /* Header Navigasi */
+        .nav-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(240, 249, 255, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.9);
+        }
+
+        .back-btn, .menu-btn {
+            font-size: 1.2rem;
+            color: var(--text-main);
+            text-decoration: none;
+            background: rgba(255,255,255,0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #fff;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .back-btn:active, .menu-btn:active { transform: scale(0.9); background: #fff; }
+        .page-title { font-weight: 700; font-size: 1.1rem; color: var(--arctic-dark); }
+
+        /* Sidebar CSS */
+        .sidebar {
+            position: fixed;
+            top: 0; right: -100%; width: 80%; max-width: 300px; height: 100%;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px);
+            z-index: 200; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 1px solid #fff; padding: 24px;
+            box-shadow: -5px 0 30px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+        }
+        .sidebar.active { right: 0; }
+        
+        .sidebar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;
+        }
+        .lang-list { list-style: none; }
+        .lang-item {
+            padding: 16px 12px; border-radius: 12px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 12px;
+            color: var(--text-muted); cursor: pointer; font-weight: 500; transition: all 0.2s;
+        }
+        .lang-item:hover { background: #f1f5f9; color: var(--arctic-dark); }
+        .lang-item.active { background: #e0f2fe; color: var(--arctic-dark); border: 1px solid #bae6fd; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30, 41, 59, 0.2); z-index: 150; opacity: 0;
+            pointer-events: none; transition: 0.3s; backdrop-filter: blur(2px);
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* Main Content */
+        .container {
+            padding: 24px; max-width: 600px; margin: 0 auto;
+            animation: fadeUp 0.5s ease-out;
+        }
+
+        /* Inputs */
+        .gender-group { display: flex; gap: 15px; margin-bottom: 25px; }
+        .gender-option {
+            flex: 1; background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 20px; border-radius: var(--card-radius); text-align: center;
+            cursor: pointer; transition: 0.3s; color: var(--text-muted); box-shadow: var(--shadow-ice);
+        }
+        .gender-option.active {
+            background: #fff; border-color: var(--arctic-primary); color: var(--arctic-primary);
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2); transform: translateY(-2px);
+        }
+        .gender-option i { font-size: 2rem; margin-bottom: 8px; display: block; }
+
+        .input-card {
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border); border-radius: var(--card-radius);
+            padding: 25px; margin-bottom: 20px; box-shadow: var(--shadow-ice);
+        }
+        .input-label {
+            display: block; font-size: 0.9rem; color: var(--text-muted);
+            margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .range-value {
+            font-size: 2.5rem; font-weight: 800; color: var(--text-main);
+            text-align: center; margin-bottom: 10px;
+        }
+        .range-value span { font-size: 1rem; color: var(--text-muted); font-weight: 500; }
+
+        input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 8px; background: #bae6fd; border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%;
+            background: var(--arctic-primary); margin-top: -8px; box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+            border: 2px solid #fff;
+        }
+
+        /* Activity Selector Styling */
+        .activity-select {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            border-radius: 12px;
+            border: 1px solid #bae6fd;
+            background: #fff;
+            color: var(--text-main);
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%230ea5e9%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 12px auto;
+        }
+
+        /* Adsterra Container */
+        .ad-container {
+            margin: 20px 0; text-align: center; min-height: 60px;
+            border-radius: 12px; overflow: hidden;
+        }
+
+        /* Action Button */
+        .calc-btn {
+            width: 100%; padding: 18px; background: var(--arctic-primary);
+            color: white; border: none; border-radius: 16px; font-size: 1.1rem;
+            font-weight: 700; cursor: pointer; box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4);
+            transition: 0.3s; position: relative; overflow: hidden;
+        }
+        .calc-btn:active { transform: scale(0.98); }
+
+        /* Result Area */
+        .result-container {
+            margin-top: 30px; background: rgba(255, 255, 255, 0.9);
+            border-radius: var(--card-radius); padding: 30px 20px; text-align: center;
+            display: none; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid #fff;
+        }
+        
+        .tdee-number {
+            font-size: 3.5rem; font-weight: 800; margin: 10px 0;
+            background: linear-gradient(45deg, var(--arctic-dark), var(--arctic-primary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        
+        .goal-grid {
+            display: grid; gap: 10px; margin-top: 20px;
+            grid-template-columns: 1fr;
+        }
+        
+        .goal-card {
+            background: #f8fafc; border-radius: 12px; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid #e2e8f0;
+        }
+        .goal-card.main { background: #e0f2fe; border-color: #bae6fd; }
+        
+        .goal-title { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); }
+        .goal-cal { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
+        .unit { font-size: 0.8rem; color: var(--text-muted); font-weight: normal; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Overlay -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar (Menu Bahasa) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo" style="font-weight:800; color:var(--arctic-dark)" data-i18n="menu_settings">Settings</span>
+            <button class="menu-btn" style="width:32px; height:32px;" onclick="toggleSidebar()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <ul class="lang-list">
+            <li class="lang-item active" onclick="changeLanguage('en', this)">
+                <i class="fa-solid fa-earth-americas"></i> English (EN)
+            </li>
+            <li class="lang-item" onclick="changeLanguage('id', this)">
+                <i class="fa-solid fa-flag"></i> Indonesia (ID)
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Header -->
+    <header class="nav-header">
+        <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="page-title" data-i18n="title_calc">Calorie Calculator</div>
+        <button class="menu-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+    </header>
+
+    <!-- Content -->
+    <main class="container">
+        
+        <!-- Gender Select -->
+        <div class="gender-group">
+            <div class="gender-option active" onclick="selectGender('male', this)">
+                <i class="fa-solid fa-mars"></i>
+                <span data-i18n="gender_male">Male</span>
+            </div>
+            <div class="gender-option" onclick="selectGender('female', this)">
+                <i class="fa-solid fa-venus"></i>
+                <span data-i18n="gender_female">Female</span>
+            </div>
+        </div>
+
+        <!-- Age Input -->
+        <div class="input-card">
+            <label class="input-label" data-i18n="label_age">Age (Umur)</label>
+            <div class="range-value" id="ageVal">25 <span data-i18n="unit_years">years</span></div>
+            <input type="range" min="10" max="100" value="25" id="ageRange" 
+                oninput="updateDisplay('ageVal', this.value, currentLang === 'id' ? 'tahun' : 'years')">
+        </div>
+
+        <!-- Height Input -->
+        <div class="input-card">
+            <label class="input-label" data-i18n="label_height">Height (Tinggi)</label>
+            <div class="range-value" id="heightVal">170 <span>cm</span></div>
+            <input type="range" min="100" max="220" value="170" id="heightRange" 
+                oninput="updateDisplay('heightVal', this.value, 'cm')">
+        </div>
+
+        <!-- Weight Input -->
+        <div class="input-card">
+            <label class="input-label" data-i18n="label_weight">Weight (Berat)</label>
+            <div class="range-value" id="weightVal">65 <span>kg</span></div>
+            <input type="range" min="30" max="150" value="65" id="weightRange" 
+                oninput="updateDisplay('weightVal', this.value, 'kg')">
+        </div>
+
+        <!-- Activity Level -->
+        <div class="input-card">
+            <label class="input-label" data-i18n="label_activity">Activity Level</label>
+            <select id="activityLevel" class="activity-select">
+                <option value="1.2" data-i18n="act_sedentary">Sedentary (Little or no exercise)</option>
+                <option value="1.375" data-i18n="act_light">Light (Exercise 1-3 times/week)</option>
+                <option value="1.55" data-i18n="act_moderate">Moderate (Exercise 4-5 times/week)</option>
+                <option value="1.725" data-i18n="act_active">Active (Exercise daily or intense)</option>
+                <option value="1.9" data-i18n="act_very_active">Very Active (Intense exercise daily)</option>
+            </select>
+        </div>
+
+        <!-- IKLAN ADSTERRA -->
+        <div class="ad-container">
+            <script type="text/javascript">
+                atOptions = {
+                    'key' : '2a28cd5411ae53a35cf4ec828d845d19',
+                    'format' : 'iframe',
+                    'height' : 60,
+                    'width' : 468,
+                    'params' : {}
+                };
+            </script>
+            <script type="text/javascript" src="//www.highperformanceformat.com/2a28cd5411ae53a35cf4ec828d845d19/invoke.js"></script>
+        </div>
+
+        <!-- Calculate Button -->
+        <button class="calc-btn" onclick="calculateCalories()">
+            <span data-i18n="btn_calculate">Calculate Calories</span> <i class="fa-solid fa-fire" style="margin-left: 8px;"></i>
+        </button>
+
+        <!-- Result Area -->
+        <div class="result-container" id="resultArea">
+            <div class="result-title" data-i18n="result_maintenance">Daily Maintenance Calories</div>
+            <div class="tdee-number" id="tdeeScore">0</div>
+            <p class="bmi-desc" data-i18n="result_desc">calories/day to maintain current weight.</p>
+            
+            <!-- Goals Grid -->
+            <div class="goal-grid">
+                <div class="goal-card">
+                    <span class="goal-title" data-i18n="goal_lose">Lose 0.5kg/week</span>
+                    <span class="goal-cal" id="calLose">0 <span class="unit">kcal</span></span>
+                </div>
+                <div class="goal-card">
+                    <span class="goal-title" data-i18n="goal_extreme">Lose 1kg/week</span>
+                    <span class="goal-cal" id="calExtreme">0 <span class="unit">kcal</span></span>
+                </div>
+                <div class="goal-card">
+                    <span class="goal-title" data-i18n="goal_gain">Gain 0.5kg/week</span>
+                    <span class="goal-cal" id="calGain">0 <span class="unit">kcal</span></span>
+                </div>
+            </div>
+            
+            <button onclick="resetCalc()" style="margin-top: 20px; background:none; border:none; color:var(--text-muted); text-decoration:underline; cursor:pointer;" data-i18n="btn_recalculate">Recalculate</button>
+        </div>
+
+    </main>
+
+    <script>
+        // --- GLOBAL VARIABLES ---
+        let currentLang = 'en';
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        let selectedGender = 'male';
+
+        // --- TRANSLATION DICTIONARY ---
+        const dictionary = {
+            en: {
+                menu_settings: "Settings",
+                title_calc: "Calorie Calculator",
+                gender_male: "Male",
+                gender_female: "Female",
+                label_height: "Height",
+                label_weight: "Weight",
+                label_age: "Age",
+                label_activity: "Activity Level",
+                unit_years: "years",
+                
+                // Activity Options
+                act_sedentary: "Sedentary (Little or no exercise)",
+                act_light: "Light (Exercise 1-3 times/week)",
+                act_moderate: "Moderate (Exercise 4-5 times/week)",
+                act_active: "Active (Exercise daily or intense)",
+                act_very_active: "Very Active (Intense exercise daily)",
+
+                btn_calculate: "Calculate Calories",
+                result_maintenance: "Daily Maintenance Calories",
+                result_desc: "calories/day to maintain current weight.",
+                goal_lose: "Lose 0.5kg/week",
+                goal_extreme: "Lose 1kg/week",
+                goal_gain: "Gain 0.5kg/week",
+                btn_recalculate: "Recalculate"
+            },
+            id: {
+                menu_settings: "Pengaturan",
+                title_calc: "Kalkulator Kalori",
+                gender_male: "Pria",
+                gender_female: "Wanita",
+                label_height: "Tinggi Badan",
+                label_weight: "Berat Badan",
+                label_age: "Usia",
+                label_activity: "Tingkat Aktivitas",
+                unit_years: "tahun",
+
+                // Activity Options
+                act_sedentary: "Jarang Olahraga (Duduk terus)",
+                act_light: "Ringan (Olahraga 1-3x/minggu)",
+                act_moderate: "Sedang (Olahraga 4-5x/minggu)",
+                act_active: "Aktif (Olahraga setiap hari)",
+                act_very_active: "Sangat Aktif (Latihan berat/fisik)",
+
+                btn_calculate: "Hitung Kalori",
+                result_maintenance: "Kalori Harian (TDEE)",
+                result_desc: "kalori/hari untuk mempertahankan berat.",
+                goal_lose: "Turun 0.5kg/minggu",
+                goal_extreme: "Turun 1kg/minggu",
+                goal_gain: "Naik 0.5kg/minggu",
+                btn_recalculate: "Hitung Ulang"
+            }
+        };
+
+        // --- UI FUNCTIONS ---
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function updateDisplay(elementId, value, unit) {
+            document.getElementById(elementId).innerHTML = `${value} <span>${unit}</span>`;
+        }
+
+        function selectGender(gender, element) {
+            selectedGender = gender;
+            document.querySelectorAll('.gender-option').forEach(opt => opt.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // --- LANGUAGE LOGIC ---
+        function changeLanguage(lang, element) {
+            currentLang = lang;
+            
+            // Update Sidebar UI
+            document.querySelectorAll('.lang-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+
+            // Update Text Content
+            const texts = dictionary[lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (texts[key]) {
+                    el.innerText = texts[key];
+                }
+            });
+
+            // Update dynamic units
+            const ageVal = document.getElementById('ageRange').value;
+            updateDisplay('ageVal', ageVal, lang === 'id' ? 'tahun' : 'years');
+
+            setTimeout(() => toggleSidebar(), 300);
+        }
+
+        // --- CALORIE CALCULATION LOGIC (Mifflin-St Jeor) ---
+        function calculateCalories() {
+            const heightCm = parseFloat(document.getElementById('heightRange').value);
+            const weightKg = parseFloat(document.getElementById('weightRange').value);
+            const age = parseFloat(document.getElementById('ageRange').value);
+            const activityMultiplier = parseFloat(document.getElementById('activityLevel').value);
+
+            // 1. Calculate BMR (Mifflin-St Jeor)
+            let bmr;
+            if (selectedGender === 'male') {
+                bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) + 5;
+            } else {
+                bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) - 161;
+            }
+
+            // 2. Calculate TDEE
+            const tdee = Math.round(bmr * activityMultiplier);
+
+            // 3. Display Results
+            const resultArea = document.getElementById('resultArea');
+            resultArea.style.display = 'block';
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Animate Count (Optional polish)
+            document.getElementById('tdeeScore').innerText = tdee.toLocaleString();
+
+            // Calculate Goals
+            // Lose 0.5kg ~ -500 kcal, Lose 1kg ~ -1000 kcal
+            // Gain 0.5kg ~ +500 kcal
+            document.getElementById('calLose').innerHTML = `${(tdee - 500).toLocaleString()} <span class="unit">kcal</span>`;
+            
+            // Safety Check: Don't go below 1200 (women) or 1500 (men) ideally, but for raw calc we just show number
+            // Or clamp at minimal safe
+            let extremeVal = tdee - 1000;
+            if(extremeVal < 1000) extremeVal = 1000; // Simple floor
+            document.getElementById('calExtreme').innerHTML = `${extremeVal.toLocaleString()} <span class="unit">kcal</span>`;
+            
+            document.getElementById('calGain').innerHTML = `${(tdee + 500).toLocaleString()} <span class="unit">kcal</span>`;
+        }
+
+        function resetCalc() {
+            document.getElementById('resultArea').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</body>
+</html>
